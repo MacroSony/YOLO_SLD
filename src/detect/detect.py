@@ -7,6 +7,7 @@ from pathlib import Path
 import sys
 
 import numpy as np
+import cv2
 
 # Assuming 'yolov9' is a directory within the 'src' directory of your project
 ROOT = Path(__file__).resolve().parents[2]  # 'src' directory
@@ -19,7 +20,7 @@ from yolov9.models.common import DetectMultiBackend
 from yolov9.utils.general import (LOGGER, Profile, check_img_size,
                            non_max_suppression, scale_boxes)
 from yolov9.utils.torch_utils import select_device, smart_inference_mode
-
+from yolov9.utils.plots import Annotator
 from yolov9.utils.augmentations import letterbox
 
 
@@ -44,7 +45,7 @@ def inference(model, imgs, imgsz=(640, 640),
     max_conf = float('-inf')
 
     for j, im0 in enumerate(imgs):
-        
+        im0 = np.ascontiguousarray(im0)
         im = letterbox(im0, imgsz, stride, auto=True)[0]  # padded resize
         im = im.transpose((2, 0, 1))[::-1]  # HWC to CHW, BGR to RGB
         im = np.ascontiguousarray(im)  # contiguous
@@ -64,16 +65,41 @@ def inference(model, imgs, imgsz=(640, 640),
 
         dets = {'img': im0, 'bboxes': []}
         # Convert Results
+
+        # annotator = Annotator(im0, line_width=3, example=str(names))
+        # print(pred)
+        # Process detections
         for det in pred:  # per image
             if len(det):
                 # Rescale boxes from img_size to im0 size
                 det[:, :4] = scale_boxes(im.shape[2:], det[:, :4], im0.shape).round()
-
                 # Append Results
                 for *xyxy, conf, cls in reversed(det):
                     if conf > max_conf:
                         max_conf = conf
                         preds["max"] = j
                     dets['bboxes'].append([cls, conf, *xyxy]) # [class, confidence, x1, y1, x2, y2]
-        preds[j] = dets
+                    # c = int(cls)  # integer class
+                    # label = f'{names[c]} {conf:.2f}'
+                    # annotator.box_label(xyxy, label, color=(199, 0, 0))
+        # result = annotator.result()
+        # cv2.imwrite(f'output_{j}.png', result)
+
+        # Only append if there are detections
+        # print(dets['bboxes'])
+        if dets['bboxes']:
+            preds[j] = dets
+    return preds
+
+def inference_all_patches(patches, page_to_check, model, imgsz=(640, 640), 
+              conf_thres=0.25, iou_thres=0.45, max_det=1000, 
+              classes=None, agnostic_nms=False, 
+              augment=False, visualize=False):
+    preds = []
+    for i, patch in enumerate(patches):
+        if i in page_to_check:
+            for row in patch:
+                preds.append(inference(model, row, imgsz=(640,640), conf_thres=conf_thres, 
+                                       iou_thres=iou_thres, max_det=max_det, classes=classes, 
+                                       agnostic_nms=agnostic_nms, augment=augment, visualize=visualize)) # Dictionary of predictions
     return preds

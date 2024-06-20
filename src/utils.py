@@ -93,20 +93,19 @@ def crop_image(image, crop_size, step=None):
     if step is None:
         step = crop_size
 
-    patches = patchify(img_arr, (crop_size, crop_size,3), step=crop_size)
+    patches = patchify(img_arr, (crop_size, crop_size,3), step=step)
     return patches
 
 def crop_images(images, crop_size, step=None):
     """
     Crop all images in a directory to squares with specified size
     """
-    patches = []
+    all_patches = []
     if step is None:
         step = crop_size
     for img in images:
-        patches.append(crop_image(img, crop_size, step).reshape(-1, crop_size, crop_size, 3))
-    
-    return np.array(patches).reshape(-1, crop_size, crop_size, 3)
+        all_patches.append(crop_image(img, crop_size, step).squeeze(2))
+    return all_patches    
 
 def crop_image_xyxy(image, xyxy):
     """
