@@ -107,3 +107,11 @@ def crop_images(images, crop_size, step=None):
         patches.append(crop_image(img, crop_size, step).reshape(-1, crop_size, crop_size, 3))
     
     return np.array(patches).reshape(-1, crop_size, crop_size, 3)
+
+def crop_image_xyxy(image, xyxy):
+    """
+    Crop an image to a bounding box
+    """
+    img_arr = np.asarray(image) 
+    x_min, y_min, x_max, y_max = xyxy
+    return img_arr[y_min:y_max, x_min:x_max]
