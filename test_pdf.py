@@ -24,5 +24,5 @@ all_bboxes = non_max_suppression(np.array(all_bboxes), 0.5)
 
 img = draw_bboxes_xyxy(np.array(imgs[0]), all_bboxes, color=(199, 0, 0), thickness=3)
 cv2.imwrite("output.png", img)
-print(len(all_bboxes))
+
 print(count_with_conf_thresholds(all_bboxes, [0.6, 0.7, 0.8, .85, 0.9]))

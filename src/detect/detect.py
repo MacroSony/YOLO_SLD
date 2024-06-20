@@ -95,11 +95,12 @@ def inference_all_patches(patches, page_to_check, model, imgsz=(640, 640),
               conf_thres=0.25, iou_thres=0.45, max_det=1000, 
               classes=None, agnostic_nms=False, 
               augment=False, visualize=False):
-    preds = []
+    preds = {}
     for i, patch in enumerate(patches):
         if i in page_to_check:
+            preds[i] = []
             for row in patch:
-                preds.append(inference(model, row, imgsz=(640,640), conf_thres=conf_thres, 
+                preds[i].append(inference(model, row, imgsz=(640,640), conf_thres=conf_thres, 
                                        iou_thres=iou_thres, max_det=max_det, classes=classes, 
                                        agnostic_nms=agnostic_nms, augment=augment, visualize=visualize)) # Dictionary of predictions
     return preds
