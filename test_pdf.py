@@ -1,4 +1,4 @@
-from src.utils import pdf_to_png, crop_images
+from src.utils import pdf_to_png, crop_images, draw_bboxes_xyxy, non_max_suppression, patches_bbox_to_img_bbox,count_with_conf_thresholds
 from src.detect.detect import load_model, inference_all_patches
 from src.detect.template_match import get_template, template_match
 from patchify import unpatchify
@@ -18,17 +18,11 @@ model = load_model(weights='./models/640_v2_s.pt', device='cpu', imgsz=(640, 640
 
 preds = inference_all_patches(patches, page_to_check, model, conf_thres=0.6) # Dictionary of predictions
 
-# preds = []
-# for i, patch in enumerate(patches):
-#     if i in page_to_check:
-#         for row in patch:
-#             preds.append(inference(model, row, conf_thres=0.6)) # Dictionary of predictions
+all_bboxes = patches_bbox_to_img_bbox(preds, 1100)
 
-# template = get_template(preds) # np array
+all_bboxes = non_max_suppression(np.array(all_bboxes), 0.5)
 
-# all_locs = []
-# for i, img in enumerate(imgs):
-#     locs = template_match(template, np.asarray(img), name=f"{i}", threshold=0.7)
-#     all_locs.append(locs)
-
-# print(all_locs)
+img = draw_bboxes_xyxy(np.array(imgs[0]), all_bboxes, color=(199, 0, 0), thickness=3)
+cv2.imwrite("output.png", img)
+print(len(all_bboxes))
+print(count_with_conf_thresholds(all_bboxes, [0.6, 0.7, 0.8, .85, 0.9]))

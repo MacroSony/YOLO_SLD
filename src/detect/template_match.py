@@ -52,10 +52,10 @@ def non_max_suppression(boxes, overlapThresh):
     pick = []
 
     # Grab the coordinates of the bounding boxes
-    x1 = boxes[:,0]
-    y1 = boxes[:,1]
-    x2 = boxes[:,2]
-    y2 = boxes[:,3]
+    x1 = boxes[:,2]
+    y1 = boxes[:,3]
+    x2 = boxes[:,4]
+    y2 = boxes[:,5]
 
     # Compute the area of the bounding boxes and sort the bounding
     # boxes by the bottom-right y-coordinate of the bounding box
