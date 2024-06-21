@@ -8,5 +8,7 @@ data
 
 run
 
+flagged
+
 *.pdf
 *.png

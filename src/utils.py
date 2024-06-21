@@ -7,6 +7,18 @@ import numpy as np
 from patchify import patchify
 from PIL import Image
 
+from pathlib import Path
+import sys
+
+# Assuming 'yolov9' is a directory within the 'src' directory of your project
+ROOT = Path(__file__).resolve().parents[1]  # 'src' directory
+YOLO_ROOT = ROOT / 'yolov9'  # YOLOv9 root directory
+
+if str(YOLO_ROOT) not in sys.path:
+    sys.path.append(str(YOLO_ROOT))  # add YOLO_ROOT to PATH
+
+from yolov9.utils.plots import Annotator
+
 def bbox_to_pixel_space(bbox, img_width, img_height):
     x_center, y_center, width, height = bbox
     x_center *= img_width
@@ -41,15 +53,21 @@ def draw_bboxes_yolo(image, bboxes, color=(0, 255, 0), thickness=2):
 
     return img
 
-def draw_bboxes_xyxy(image, bboxes, color=(0, 255, 0), thickness=2):
+def draw_bboxes_xyxy(image, bboxes, color=(0, 255, 0), thickness=2, names=None):
     img = image.copy()
+    annotator = Annotator(img, line_width=3)
     img_height, img_width = img.shape[:2]
 
     for bbox in bboxes:
-        cls, conf, x_min, y_min, x_max, y_max = bbox
-        img = cv2.rectangle(img, (int(x_min.item()), int(y_min.item())), (int(x_max.item()), int(y_max.item())), color, thickness)
-
-    return img
+        cls, conf, *xyxy = bbox
+        if names is not None:
+            label = f'{names[cls]} {conf:.2f}'
+        else:
+            label = ""
+        annotator.box_label(xyxy, label, color=(199, 0, 0))
+    result = annotator.result()
+        # img = cv2.rectangle(img, (int(x_min.item()), int(y_min.item())), (int(x_max.item()), int(y_max.item())), color, thickness)
+    return result
 
 def transform(images, bboxes, transfomration, augmentation_factor):
     transformed_images = []
