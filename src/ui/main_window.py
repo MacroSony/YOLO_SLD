@@ -2,10 +2,7 @@ import gradio as gr
 
 from src.utils import pdf_to_png, crop_images, draw_bboxes_xyxy, non_max_suppression, patches_bbox_to_img_bbox,count_with_conf_thresholds
 from src.detect.detect import load_model, inference_all_patches
-from src.detect.template_match import get_template, template_match
-from patchify import unpatchify
 import numpy as np
-import cv2
 from PIL import Image
 from pathlib import Path
 import tempfile
@@ -19,13 +16,14 @@ def find_breakers(page_to_check, file_path, model):
     page_set_to_check = set(map(int, page_to_check.split(",")))
 
     output_imgs = []
+    all_bboxes = []
     preds = inference_all_patches(patches, page_set_to_check, model, conf_thres=0.6) # Dictionary of predictions
     for page in page_set_to_check:
         print(page)
-        all_bboxes = patches_bbox_to_img_bbox(preds[page], 1100)
-        all_bboxes = non_max_suppression(np.array(all_bboxes), 0.5)
-
-        img = draw_bboxes_xyxy(np.array(imgs[page]), all_bboxes, color=(199, 0, 0), thickness=3)
+        bboxes = patches_bbox_to_img_bbox(preds[page], 1100)
+        bboxes = non_max_suppression(np.array(bboxes), 0.5)
+        all_bboxes.extend(bboxes)
+        img = draw_bboxes_xyxy(np.array(imgs[page]), bboxes, color=(199, 0, 0), thickness=3)
         output_imgs.append(resize_images_to_long_edge(Image.fromarray(img), 3000))
 
     return output_imgs, count_with_conf_thresholds(all_bboxes, [0.6, 0.7, 0.8, .85, 0.9])
@@ -55,7 +53,7 @@ def main():
     demo = gr.Interface(
         fn=find_breakers_wrapper,
         inputs=["text", "file"],
-        outputs=[gr.Gallery(label="Detected Breakers"), "text"],
+        outputs=[gr.Gallery(label="Detected Breakers", interactive=False), "text"],
     )
 
     demo.launch()
