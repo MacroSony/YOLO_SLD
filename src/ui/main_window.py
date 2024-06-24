@@ -27,7 +27,12 @@ def find_breakers(page_to_check, file_path, model):
         img = draw_bboxes_xyxy(np.array(imgs[page]), bboxes, color=(199, 0, 0), thickness=3, names=model.names)
         output_imgs.append(resize_images_to_long_edge(Image.fromarray(img), 3000))
 
-    return output_imgs, format_output_counts(count_with_conf_thresholds(all_bboxes, [0.6, 0.7, 0.8, .85, 0.9]))
+    with open("Result.txt", 'w') as file:
+        file.write(f"Breakers Detected: {count_with_conf_thresholds(all_bboxes, [0.6])}\n")
+
+    # Return the path to the text file
+
+    return output_imgs, format_output_counts(count_with_conf_thresholds(all_bboxes, [0.6, 0.7, 0.8, .85, 0.9])), "Result.txt"
 
 def resize_images_to_long_edge(img, long_edge_size):
     # resized_images = []
@@ -53,18 +58,19 @@ def main():
     model = load_model(weights='./models/640_v2_s.pt', device='cpu', imgsz=(640, 640), half=False) # pytorch model
 
     def find_breakers_wrapper(page_to_check, file):
-        imgs, counts = find_breakers(page_to_check, file, model)
+        imgs, counts, file = find_breakers(page_to_check, file, model)
         image_paths = []
         for img in imgs:
             with tempfile.NamedTemporaryFile(delete=False, suffix='.png') as tmp:
                 img.save(tmp.name, format='PNG')
                 image_paths.append(tmp.name)
-        return image_paths, counts
+
+        return image_paths, counts, file
     
     demo = gr.Interface(
         fn=find_breakers_wrapper,
         inputs=[gr.Textbox(label="Pages to Check"), gr.File(file_types=["pdf"], label="Upload SLD")],
-        outputs=[gr.Gallery(label="Detected Breakers", interactive=False), "html"],\
+        outputs=[gr.Gallery(label="Detected Breakers", interactive=False), "html", gr.File(label="Download Result")],\
         allow_flagging=False
     )
 
