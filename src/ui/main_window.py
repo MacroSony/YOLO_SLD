@@ -22,7 +22,7 @@ def find_breakers(page_to_check, file_path, model):
     preds = inference_all_patches(patches, page_set_to_check, model, conf_thres=0.6) # Dictionary of predictions
     for page in page_set_to_check:
         bboxes = patches_bbox_to_img_bbox(preds[page], 1100)
-        bboxes = non_max_suppression(np.array(bboxes), 0.5)
+        bboxes = non_max_suppression(np.array(bboxes), 0.2)
         all_bboxes.extend(bboxes)
         img = draw_bboxes_xyxy(np.array(imgs[page]), bboxes, color=(199, 0, 0), thickness=3, names=model.names)
         output_imgs.append(resize_images_to_long_edge(Image.fromarray(img), 3000))
@@ -54,8 +54,8 @@ def format_output_counts(counts):
     line2 = line2[:-2] + "</p>"
     return line1 + line2
 
-def main():
-    model = load_model(weights='./models/640_v2_s.pt', device='cpu', imgsz=(640, 640), half=False) # pytorch model
+def main(imgsz=(640, 640)):
+    model = load_model(weights='./models/640_v2_s.pt', device='cpu', imgsz=imgsz, half=False) # pytorch model
 
     def find_breakers_wrapper(page_to_check, file):
         imgs, counts, file = find_breakers(page_to_check, file, model)
@@ -74,4 +74,4 @@ def main():
         allow_flagging=False
     )
 
-    demo.launch()
+    demo.launch(share=True)
